@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as myhttp;
+import 'package:http/http.dart' as http;
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -27,80 +27,69 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late String id;
-  late String email;
-  late String name;
-  late String image;
+  TextEditingController nameC = TextEditingController();
+  TextEditingController jobC = TextEditingController();
 
-  @override
-  void initState() {
-    id = "*****";
-    email = "*****";
-    name = "*****";
-    image = "*****";
-    super.initState();
-  }
+  String hasilResponse = "data not available";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
-        title: Text("http GET"),
+        centerTitle: false,
+        title: Text("http POST"),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade400,
-                image: DecorationImage(
-                  image: NetworkImage(image),
-                  fit: BoxFit.cover,
-                ),
-                border: Border.all(
-                  color: Colors.white,
-                  width: 5,
-                ),
-                borderRadius: BorderRadius.circular(120),
+      body: ListView(
+        padding: EdgeInsets.all(26),
+        children: [
+          TextField(
+            controller: nameC,
+            autocorrect: false,
+            keyboardType: TextInputType.text,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: "Name",
+            ),
+          ),
+          SizedBox(height: 15),
+          TextField(
+            controller: jobC,
+            autocorrect: false,
+            keyboardType: TextInputType.text,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: "Job",
+            ),
+          ),
+          SizedBox(height: 15),
+          ElevatedButton(
+            onPressed: () async {
+              var myResponse = await http.post(
+                Uri.parse("https://reqres.in/api/users"),
+                body: {"name": nameC.text, "job": jobC.text},
+              );
+
+              // Map<String, dynamic> data = json.decode(myResponse.body) as Map<String, dynamic>;
+              Map<String, dynamic> data =
+                  jsonDecode(myResponse.body) as Map<String, dynamic>;
+              setState(() {
+                hasilResponse = "${data["name"]} - ${data["job"]}";
+              });
+            },
+            child: Text("Save"),
+          ),
+          SizedBox(height: 50),
+          Divider(color: Colors.black),
+          SizedBox(height: 10),
+          Center(
+            child: Text(
+              hasilResponse,
+              style: TextStyle(
+                fontSize: 24,
               ),
             ),
-            Text("id: $id", style: TextStyle(fontSize: 20)),
-            Text("name: $email", style: TextStyle(fontSize: 20)),
-            Text("email: $name", style: TextStyle(fontSize: 20)),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                var myResponse = await myhttp
-                    .get(Uri.parse("https://reqres.in/api/users/2"));
-                if (myResponse.statusCode == 200) {
-                  print("GET data success");
-                  Map<String, dynamic> data =
-                      json.decode(myResponse.body) as Map<String, dynamic>;
-                  print(data["data"]);
-                  setState(() {
-                    id = data["data"]["id"].toString();
-                    email = data["data"]["email"].toString();
-                    image = data["data"]["avatar"].toString();
-                    name =
-                        "${data["data"]["first_name"]} ${data["data"]["last_name"]}";
-                  });
-                } else {
-                  print(
-                      "Response error! 💥 Status Code = ${myResponse.statusCode}");
-                  setState(() {
-                    print(
-                        "Response error! 💥 Status Code = ${myResponse.statusCode}");
-                  });
-                }
-              },
-              child: Text("Get Data"),
-            ),
-          ],
-        ),
+          )
+        ],
       ),
     );
   }
