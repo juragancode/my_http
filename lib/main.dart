@@ -31,7 +31,8 @@ class _HomePageState extends State<HomePage> {
 
   Future getAllUser() async {
     try {
-      var response = await http.get(Uri.parse("https://reqres.in/api/users"));
+      var response =
+          await http.get(Uri.parse("https://reqres.in/api/users?page=3"));
       List data = (jsonDecode(response.body) as Map<String, dynamic>)["data"];
       data.forEach((element) {
         allUser.add(element);
@@ -51,11 +52,16 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(
         child: FutureBuilder(
-            future: getAllUser(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          future: getAllUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: Text("LOADING 🟢🟡🔴"),
+              );
+            } else {
+              if (allUser.length == 0) {
                 return Center(
-                  child: Text("LOADING 🟢🟡🔴"),
+                  child: Text("data no available"),
                 );
               }
               return ListView.builder(
@@ -70,7 +76,9 @@ class _HomePageState extends State<HomePage> {
                   subtitle: Text("${allUser[index]["email"]}"),
                 ),
               );
-            }),
+            }
+          },
+        ),
       ),
     );
   }
