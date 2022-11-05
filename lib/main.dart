@@ -27,69 +27,50 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  TextEditingController nameC = TextEditingController();
-  TextEditingController jobC = TextEditingController();
+  List<Map<String, dynamic>> allUser = [];
 
-  String hasilResponse = "data not available";
+  Future getAllUser() async {
+    try {
+      var response = await http.get(Uri.parse("https://reqres.in/api/users"));
+      List data = (jsonDecode(response.body) as Map<String, dynamic>)["data"];
+      data.forEach((element) {
+        allUser.add(element);
+      });
+    } catch (e) {
+      print("something wrong");
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: false,
-        title: Text("http POST"),
+        centerTitle: true,
+        title: Text("Future Builder"),
       ),
-      body: ListView(
-        padding: EdgeInsets.all(26),
-        children: [
-          TextField(
-            controller: nameC,
-            autocorrect: false,
-            keyboardType: TextInputType.text,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: "Name",
-            ),
-          ),
-          SizedBox(height: 15),
-          TextField(
-            controller: jobC,
-            autocorrect: false,
-            keyboardType: TextInputType.text,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: "Job",
-            ),
-          ),
-          SizedBox(height: 15),
-          ElevatedButton(
-            onPressed: () async {
-              var myResponse = await http.post(
-                Uri.parse("https://reqres.in/api/users"),
-                body: {"name": nameC.text, "job": jobC.text},
+      body: Center(
+        child: FutureBuilder(
+            future: getAllUser(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: Text("LOADING 🟢🟡🔴"),
+                );
+              }
+              return ListView.builder(
+                itemCount: allUser.length,
+                itemBuilder: (context, index) => ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.grey[400],
+                    backgroundImage: NetworkImage(allUser[index]["avatar"]),
+                  ),
+                  title: Text(
+                      "${allUser[index]["first_name"]} ${allUser[index]["last_name"]}"),
+                  subtitle: Text("${allUser[index]["email"]}"),
+                ),
               );
-
-              // Map<String, dynamic> data = json.decode(myResponse.body) as Map<String, dynamic>;
-              Map<String, dynamic> data =
-                  jsonDecode(myResponse.body) as Map<String, dynamic>;
-              setState(() {
-                hasilResponse = "${data["name"]} - ${data["job"]}";
-              });
-            },
-            child: Text("Save"),
-          ),
-          SizedBox(height: 50),
-          Divider(color: Colors.black),
-          SizedBox(height: 10),
-          Center(
-            child: Text(
-              hasilResponse,
-              style: TextStyle(
-                fontSize: 24,
-              ),
-            ),
-          )
-        ],
+            }),
       ),
     );
   }
